@@ -11,7 +11,6 @@
 
 ### Example Code ###
 ```
-#!c#
     static void Main(string[] args)
     {
       JanusRestClient client = new JanusRestClient("http://192.168.0.195:8088/janus");
