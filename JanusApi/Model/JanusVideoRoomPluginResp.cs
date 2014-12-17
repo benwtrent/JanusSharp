@@ -75,6 +75,12 @@ namespace JanusApi.Model
     /// Listeners are anonymous unless they become full participants
     /// </summary>
     public int listeners { get; set; }
+
+    /// <summary>
+    /// Whether or not the room is private
+    /// </summary>
+    public bool is_private { get; set; }
+
   }
 
   public class JanusVideoRoomParticipant

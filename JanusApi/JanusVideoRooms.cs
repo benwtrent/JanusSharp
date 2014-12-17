@@ -184,8 +184,9 @@ namespace JanusApi
     /// <param name="_record">Optional, whether to record the room or not</param>
     /// <param name="_rec_dir">Optional, the recording directory</param>
     /// <param name="_fir_freq">Optional, the frequency of FIR requests for the room...also sends PLI requests at the same time</param>
+    /// <param name="_private">Optional, whether the room is private or not...defaults to not</param>
     /// <returns>Janus room response object. Will contain errors if not successful</returns>
-    public JanusVideoRoomResponse CreateRoom(int roomid, string _description = null, string _secret = null, int _bitrate = 0, string _publishers = null, bool _record = false, string _rec_dir = null, int _fir_freq = 0)
+    public JanusVideoRoomResponse CreateRoom(int roomid, string _description = null, string _secret = null, int _bitrate = 0, string _publishers = null, bool _record = false, string _rec_dir = null, int _fir_freq = 0, bool _private = false)
     {
       if (janus_video_plugin_ref.IncRef())
       {
@@ -236,6 +237,7 @@ namespace JanusApi
         obj.request = "create";
         obj.room = roomid;
         obj.record = _record;
+        obj.is_private = _private;
         if (_bitrate > 0) obj.bitrate = _bitrate;
         if (_fir_freq > 0) obj.fir_freq = _fir_freq;
         if (_description.HasValue()) obj.description = _description;
