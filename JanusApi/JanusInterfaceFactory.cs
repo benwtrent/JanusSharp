@@ -7,12 +7,12 @@ namespace JanusApi
 {
   static public class JanusInterfaceFactory
   {
-    public static IJanusClient GetNewJanusClient(String url)
+    public static JanusClient GetNewJanusClient(String url)
     {
       if (url[0] == 'w')
         return new JanusWebSocketClient(url);
       else if (url[0] == 'h')
-        return new JanusRestClient(url);
+        return new JanusRestHTTPClient(url);
       else
         throw new Exception("Invalid URL type, must be ws://, wss://, http://, https://");
     }

@@ -81,9 +81,6 @@ namespace JanusApi
           janus_video_plugin_ref.DecRef();
           return resp;
         }
-        var room_request = new RestRequest(Method.POST);
-        room_request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-        room_request.RequestFormat = DataFormat.Json;
         dynamic obj = new ExpandoObject();
         obj.request = "list";
         dynamic msg = new ExpandoObject();
@@ -91,8 +88,7 @@ namespace JanusApi
         msg.janus = "message";
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
-        room_request.AddBody(msg);
-        JanusVideoRoomListResponse response = Execute<JanusVideoRoomListResponse>(room_request);
+        JanusVideoRoomListResponse response = Execute<JanusVideoRoomListResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
         janus_video_plugin_ref.DecRef();
         return response;
       }
@@ -149,9 +145,6 @@ namespace JanusApi
           janus_video_plugin_ref.DecRef();
           return resp;
         }
-        var room_request = new RestRequest(Method.POST);
-        room_request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-        room_request.RequestFormat = DataFormat.Json;
         dynamic obj = new ExpandoObject();
         obj.request = "exists";
         obj.room = room_id;
@@ -160,8 +153,7 @@ namespace JanusApi
         msg.janus = "message";
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
-        room_request.AddBody(msg);
-        JanusVideoRoomExistsResponse response = Execute<JanusVideoRoomExistsResponse>(room_request);
+        JanusVideoRoomExistsResponse response = Execute<JanusVideoRoomExistsResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
         janus_video_plugin_ref.DecRef();
         return response;
       }
@@ -228,9 +220,6 @@ namespace JanusApi
           janus_video_plugin_ref.DecRef();
           return resp;
         }
-        var room_request = new RestRequest(Method.POST);
-        room_request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-        room_request.RequestFormat = DataFormat.Json;
         dynamic obj = new ExpandoObject();
         obj.request = "create";
         obj.room = roomid;
@@ -246,8 +235,7 @@ namespace JanusApi
         msg.janus = "message";
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
-        room_request.AddBody(msg);
-        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(room_request);
+        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
         janus_video_plugin_ref.DecRef();
         return response;
       }
@@ -298,9 +286,6 @@ namespace JanusApi
           janus_video_plugin_ref.DecRef();
           return resp;
         }
-        var room_request = new RestRequest(Method.POST);
-        room_request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-        room_request.RequestFormat = DataFormat.Json;
         dynamic obj = new ExpandoObject();
         obj.request = "anonymous_listen";
         obj.room = roomid;
@@ -311,8 +296,7 @@ namespace JanusApi
         msg.janus = "message";
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
-        room_request.AddBody(msg);
-        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(room_request);
+        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
         janus_video_plugin_ref.DecRef();
         return response;
       }
@@ -340,11 +324,7 @@ namespace JanusApi
             msg.transaction = GetNewRandomTransaction();
             if (api_secret.HasValue()) msg.apisecret = api_secret;
             msg.body = obj;
-            var request = new RestRequest(Method.POST);
-            request.RequestFormat = DataFormat.Json;
-            request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-            request.AddBody(msg);
-            JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(request);
+            JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
             janus_video_plugin_ref.DecRef();
             return response;
         }
@@ -378,17 +358,13 @@ namespace JanusApi
         {
           if (JanusVideoRoomPluginHandle == 0)
           {
-            RestRequest request = new RestRequest(Method.POST);
-            request.Resource = "{SessionToken}";
             string transaction = GetNewRandomTransaction();
-            request.RequestFormat = DataFormat.Json;
             dynamic msg = new ExpandoObject();
             msg.janus = "attach";
             msg.plugin = "janus.plugin.videoroom";
             msg.transaction = GetNewRandomTransaction();
             if (api_secret.HasValue()) msg.apisecret = api_secret;
-            request.AddBody(msg);
-            JanusBaseResponse resp = Execute<JanusBaseResponse>(request);
+            JanusBaseResponse resp = Execute<JanusBaseResponse>(msg, JanusRequestType.Attach, JanusPluginType.JanusVideoRoom);
 
             if (resp == (null) || resp.janus == "error")
             {
@@ -417,15 +393,11 @@ namespace JanusApi
       {
         if (IsRestClientInitialized() && JanusVideoRoomPluginHandle > 0)
         {
-          RestRequest request = new RestRequest(Method.POST);
-          request.Resource = "{SessionToken}/" + JanusVideoRoomPluginHandle;
-          request.RequestFormat = DataFormat.Json;
           dynamic msg = new ExpandoObject();
           msg.janus = "detach";
           msg.transaction = GetNewRandomTransaction();
           if (api_secret.HasValue()) msg.apisecret = api_secret;
-          request.AddBody(msg);
-          Execute<JanusBaseResponse>(request);
+          Execute<JanusBaseResponse>(msg, JanusRequestType.Detach, JanusPluginType.JanusVideoRoom);
           JanusVideoRoomPluginHandle = 0;
         }
         janus_video_plugin_ref.UnblockIncrease();

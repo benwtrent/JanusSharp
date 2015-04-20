@@ -35,7 +35,7 @@ namespace JanusApi
     public long SessionToken { get; private set; }
     private static Random random = new Random();
     public string BaseUrl { get; private set; }
-    private IJanusClient _client;
+    private JanusClient _client;
     private bool keep_alive;
     private string api_secret;
     private static readonly object janus_core_lock_obj = new object();
@@ -101,7 +101,7 @@ namespace JanusApi
         if (SessionToken == 0)
         {
           dynamic obj = new ExpandoObject();
-          if (api_secret.HasValue()) obj.apisecret = api_secret;
+          if (!String.IsNullOrWhiteSpace(api_secret)) obj.apisecret = api_secret;
           obj.janus = "create";
           obj.transaction = GetNewRandomTransaction();
           JanusBaseResponse resp = _client.Execute<JanusBaseResponse>(obj, JanusRequestType.Create);
@@ -144,7 +144,7 @@ namespace JanusApi
       dynamic msg = new ExpandoObject();
       msg.janus = "destroy";
       msg.transaction = GetNewRandomTransaction();
-      if (api_secret.HasValue()) msg.apisecret = api_secret;
+      if (!String.IsNullOrWhiteSpace(api_secret)) msg.apisecret = api_secret;
       _client.Execute<JanusBaseResponse>(msg, JanusRequestType.Destroy);
       _client.ClearConnectionInfo();
       SessionToken = 0;
@@ -169,14 +169,14 @@ namespace JanusApi
     /// <typeparam name="T">The type of object to create and return with the response data</typeparam>
     /// <param name="request">The RestRequest to make against the gateway(assumes that the connection is intialized</param>
     /// <returns>The populated response</returns>
-    public T Execute<T>(dynamic request, JanusRequestType type)
+    public T Execute<T>(dynamic request, JanusRequestType type) where T : new()
     {
       delay_timeout.ResetDelay(timeout_time);
       var response = _client.Execute<T>(request, type);
       return response.Data;
     }
 
-    public T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin)
+    public T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin) where T : new()
     {
       delay_timeout.ResetDelay(timeout_time);
       var response = _client.Execute<T>(request, type, plugin);

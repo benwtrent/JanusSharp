@@ -44,6 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core.cs" />
+    <Compile Include="JanusClient.cs" />
+    <Compile Include="JanusInterfaceFactory.cs" />
+    <Compile Include="JanusRequestType.cs" />
+    <Compile Include="JanusRestHTTPClient.cs" />
+    <Compile Include="JanusWebSocketClient.cs" />
     <Compile Include="Model\JanusBaseResp.cs" />
     <Compile Include="Model\JanusPluginResp.cs" />
     <Compile Include="Model\JanusVideoRoomPluginResp.cs" />

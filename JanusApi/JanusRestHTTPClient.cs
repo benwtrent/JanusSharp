@@ -9,19 +9,16 @@ using RestSharp.Extensions;
 using JanusApi.Model;
 namespace JanusApi
 {
-  public class JanusRestHTTPClient : IJanusClient
+  public class JanusRestHTTPClient : JanusClient
   {
-    private ConcurrentDictionary<JanusPluginType, long> plugin_handles;
     private RestClient _client;
-    private long session_handle;
-
     public JanusRestHTTPClient(String url) {
       _client = new RestClient();
       _client.BaseUrl = url;
       _client.Timeout = 30000;
     }
 
-    public T Execute<T>(dynamic request, JanusRequestType type) where T: new()
+    public override T Execute<T>(dynamic request, JanusRequestType type)
     {
       RestRequest rest_request = new RestRequest(Method.POST);
       rest_request.RequestFormat = DataFormat.Json;
@@ -55,12 +52,12 @@ namespace JanusApi
       return response.Data;
     }
 
-    public T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin) where T : new()
+    public override T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin)
     {
       RestRequest rest_request = new RestRequest(Method.POST);
       rest_request.RequestFormat = DataFormat.Json;
       if(type == JanusRequestType.Create || type == JanusRequestType.Destroy)
-        return Execute<T>(request, type);
+        return this.Execute<T>(request, type);
       if (session_handle == 0)
       {
         throw new Exception("Janus session is not initialized");
@@ -100,21 +97,11 @@ namespace JanusApi
       return response.Data;
     }
 
-    public void ClearConnectionInfo()
+    public override void ClearConnectionInfo()
     {
       plugin_handles.Clear();
       session_handle = 0;
       _client.RemoveDefaultParameter("SessionToken");
-    }
-
-    public long GetSessionHandle()
-    {
-      return session_handle;
-    }
-
-    public List<JanusPluginType> GetAttachedPlugins()
-    {
-      return plugin_handles.Keys.ToList();
     }
   }
 }
