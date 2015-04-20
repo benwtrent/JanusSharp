@@ -10,16 +10,13 @@ namespace JanusSharpExample
   class Program
   {
     static Random rand = new Random();
-    static JanusRestClient client = new JanusRestClient("url");
+    static JanusRestClient client = new JanusRestClient("http://192.168.1.197:8088/janus");
     private static object randSyncObj = new object();
     static void Main(string[] args)
     {
       client.InitializeConnection();
       client.InitializeVideoRoomConnection();
-      client.CreateRoom(100);
-      JanusVideoRoomExistsResponse existResponse = client.RoomExists(100);
-      JanusVideoRoomListResponse listResponse = client.ListRooms();
-      client.RemoveRoom(100);
+      client.RequestStream(1234, "192.168.0.17", 5000);
       client.CleanUp();
     }
 
@@ -35,11 +32,10 @@ namespace JanusSharpExample
       Thread.Sleep(wait);
       Console.WriteLine("Creating room: " + wait.ToString());
       client.CreateRoom(wait);
-      Thread.Sleep(wait);
+      Thread.Sleep(wait*100);
       Console.WriteLine("Removing room: " + wait.ToString());
       client.RemoveRoom(wait);
     }
-
 
     #endregion
   }

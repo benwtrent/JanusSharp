@@ -24,9 +24,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
-using RestSharp;
-using RestSharp.Deserializers;
-using RestSharp.Extensions;
+
 using System.Threading;
 using System.Dynamic;
 using JanusApi.Model;
@@ -37,12 +35,13 @@ namespace JanusApi
     public long SessionToken { get; private set; }
     private static Random random = new Random();
     public string BaseUrl { get; private set; }
-    private RestClient _client;
+    private IJanusClient _client;
     private bool keep_alive;
     private string api_secret;
     private static readonly object janus_core_lock_obj = new object();
     private static readonly object thread_monitor = new object();
     private DynamicDelayExecute delay_timeout;
+    private const int timeout_time = 20;
     /// <summary>
     /// Constructs the Rest client and prepares it to start the connection.
     /// You must initialize the connection if you want to start it.
@@ -55,10 +54,8 @@ namespace JanusApi
     {
       BaseUrl = baseUrl;
       keep_alive = keepAlive;
-      _client = new RestClient();
-      _client.BaseUrl = BaseUrl;
-      _client.Timeout = 30000;
-      delay_timeout = new DynamicDelayExecute(29);
+      _client = JanusInterfaceFactory.GetNewJanusClient(baseUrl);
+      delay_timeout = new DynamicDelayExecute(timeout_time);
       delay_timeout.OnDelayExhausted += new EventHandler(OnTimeOutFired);
       api_secret = apiSecret;
     }
@@ -69,12 +66,8 @@ namespace JanusApi
       {
         if (keep_alive)
         {
-          RestRequest request = new RestRequest(Method.POST);
-          request.RequestFormat = DataFormat.Json;
-          request.Resource = "{SessionToken}";
-          request.AddBody(new { janus = "keepalive", });
-          Execute<JanusBaseResponse>(request);
-          delay_timeout.HardReset(29);
+          _client.Execute<JanusBaseResponse>(new { janus = "keepalive" }, JanusRequestType.KeepAlive);
+          delay_timeout.HardReset(timeout_time);
         }
         else
         {
@@ -107,22 +100,17 @@ namespace JanusApi
       {
         if (SessionToken == 0)
         {
-          RestRequest request = new RestRequest(Method.POST);
-          request.RequestFormat = DataFormat.Json;
           dynamic obj = new ExpandoObject();
           if (api_secret.HasValue()) obj.apisecret = api_secret;
           obj.janus = "create";
           obj.transaction = GetNewRandomTransaction();
-          request.AddBody(obj);
-          JanusBaseResponse resp = Execute<JanusBaseResponse>(request);
+          JanusBaseResponse resp = _client.Execute<JanusBaseResponse>(obj, JanusRequestType.Create);
           if (resp == null || resp.janus != "success")
           {
             retVal = false;
           }
           else
           {
-            SessionToken = resp.data.id;
-            _client.AddDefaultUrlSegment("SessionToken", SessionToken.ToString());
             delay_timeout.Start();
             retVal = true;
           }
@@ -153,20 +141,13 @@ namespace JanusApi
 
     private void DeinitializeConnection()
     {
-      if (SessionToken > 0)
-      {
-        RestRequest request = new RestRequest(Method.POST);
-        request.Resource = "{SessionToken}";
-        request.RequestFormat = DataFormat.Json;
-        dynamic msg = new ExpandoObject();
-        msg.janus = "destroy";
-        msg.transaction = GetNewRandomTransaction();
-        if (api_secret.HasValue()) msg.apisecret = api_secret;
-        request.AddBody(msg);
-        Execute<JanusBaseResponse>(request);
-        _client.RemoveDefaultParameter("SessionToken");
-        SessionToken = 0;
-      }
+      dynamic msg = new ExpandoObject();
+      msg.janus = "destroy";
+      msg.transaction = GetNewRandomTransaction();
+      if (api_secret.HasValue()) msg.apisecret = api_secret;
+      _client.Execute<JanusBaseResponse>(msg, JanusRequestType.Destroy);
+      _client.ClearConnectionInfo();
+      SessionToken = 0;
     }
 
     /// <summary>
@@ -188,23 +169,17 @@ namespace JanusApi
     /// <typeparam name="T">The type of object to create and return with the response data</typeparam>
     /// <param name="request">The RestRequest to make against the gateway(assumes that the connection is intialized</param>
     /// <returns>The populated response</returns>
-    public T Execute<T>(RestRequest request) where T : new()
+    public T Execute<T>(dynamic request, JanusRequestType type)
     {
-      request.OnBeforeDeserialization = (resp) =>
-        {
-          if (((int)resp.StatusCode) >= 400)
-          {
-            //TODO determine what we want to do when we hit this...
-            //hit an rest exception...
-          }
-          //command was successful and the timeout needs to be reset
-          else
-          {
-            delay_timeout.ResetDelay(29);
-          }
-        };
+      delay_timeout.ResetDelay(timeout_time);
+      var response = _client.Execute<T>(request, type);
+      return response.Data;
+    }
 
-      var response = _client.Execute<T>(request);
+    public T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin)
+    {
+      delay_timeout.ResetDelay(timeout_time);
+      var response = _client.Execute<T>(request, type, plugin);
       return response.Data;
     }
   }

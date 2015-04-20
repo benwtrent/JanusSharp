@@ -72,6 +72,8 @@ namespace JanusApi
           lock (ref_lock)
           {
             ref_count++;
+            Console.WriteLine("RefCount = " + ref_count + " thread: " + Thread.CurrentThread.ManagedThreadId.ToString());
+            
             return true;
           }
         }
@@ -86,6 +88,7 @@ namespace JanusApi
     {
       lock (ref_lock)
       {
+        Console.WriteLine("Dec RefCount = " + ref_count + " thread: " + Thread.CurrentThread.ManagedThreadId.ToString());
         if (ref_count > 0)
           ref_count--;
       }
