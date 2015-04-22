@@ -24,7 +24,6 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
-
 using System.Threading;
 using System.Dynamic;
 using JanusApi.Model;
@@ -111,6 +110,7 @@ namespace JanusApi
           }
           else
           {
+            SessionToken = _client.GetSessionHandle();
             delay_timeout.Start();
             retVal = true;
           }
@@ -180,7 +180,7 @@ namespace JanusApi
     {
       delay_timeout.ResetDelay(timeout_time);
       var response = _client.Execute<T>(request, type, plugin);
-      return response.Data;
+      return response;
     }
   }
 }

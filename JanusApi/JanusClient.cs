@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
+using JanusApi.Model;
 namespace JanusApi
 {
   public abstract class JanusClient
   {
     protected long session_handle;
     protected ConcurrentDictionary<JanusPluginType, long> plugin_handles;
+
+    public JanusClient()
+    {
+        plugin_handles = new ConcurrentDictionary<JanusPluginType, long>();
+    }
     /// <summary>
     /// This will send the given request to the janus server. And respond with an object of type T.
     /// </summary>
@@ -48,6 +54,31 @@ namespace JanusApi
       return session_handle; 
     }
 
+    protected void SetSessionHandleFromResponse(dynamic obj)
+    {
+        JanusBaseResponse resp = obj as JanusBaseResponse;
+        if(resp != null)
+        {
+            session_handle = resp.data.id;
+        }
+        else
+        {
+            session_handle = 0;
+        }
+    }
+
+    protected void AddPluginHandleFromResponse(dynamic obj, JanusPluginType type)
+    {
+        JanusBaseResponse resp = obj as JanusBaseResponse;
+        if(resp != null)
+        {
+            plugin_handles[type] = resp.data.id;
+        }
+        else
+        {
+            plugin_handles[type] = 0;
+        }
+    }
     /// <summary>
     /// Gets the current list of attached plugins
     /// </summary>

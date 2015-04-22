@@ -12,7 +12,7 @@ namespace JanusApi
   public class JanusRestHTTPClient : JanusClient
   {
     private RestClient _client;
-    public JanusRestHTTPClient(String url) {
+    public JanusRestHTTPClient(String url) :base() {
       _client = new RestClient();
       _client.BaseUrl = url;
       _client.Timeout = 30000;
@@ -36,13 +36,9 @@ namespace JanusApi
 
       if (type == JanusRequestType.Create)
       {
-        JanusBaseResponse resp = response.Data as JanusBaseResponse;
-        if (resp != null)
-        {
-          session_handle = resp.data.id;
+          SetSessionHandleFromResponse(response.Data); 
           if (session_handle > 0)
             _client.AddDefaultUrlSegment("SessionToken", session_handle.ToString());
-        }
       }
       else if (type == JanusRequestType.Destroy)
       {
@@ -62,13 +58,17 @@ namespace JanusApi
       {
         throw new Exception("Janus session is not initialized");
       }
-      if (!plugin_handles.Keys.Contains(plugin) && type != JanusRequestType.Attach)
+
+      if (!plugin_handles.ContainsKey(plugin))
       {
-        throw new Exception("The desired plugin must be attached before action can be taken against it");
+          if (type != JanusRequestType.Attach)
+          {
+              throw new Exception("The desired plugin must be attached before action can be taken against it");
+          }
       }
       if (type != JanusRequestType.Attach)
       {
-        rest_request.Resource = String.Join(String.Empty, "{SessionToken}", plugin_handles[plugin].ToString());
+        rest_request.Resource = String.Join(String.Empty, "{SessionToken}", "/",plugin_handles[plugin].ToString());
       }
       else
       {
@@ -78,15 +78,7 @@ namespace JanusApi
       var response = _client.Execute<T>(rest_request);
       if (type == JanusRequestType.Attach)
       {
-        JanusBaseResponse resp = response.Data as JanusBaseResponse;
-        if (resp != null)
-        {
-          long pluginhandle = resp.data.id;
-          if (pluginhandle > 0)
-          {
-            plugin_handles[plugin] = pluginhandle;
-          }
-        }
+          AddPluginHandleFromResponse(response.Data, plugin);
       }
       if (type == JanusRequestType.Detach)
       {

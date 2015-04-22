@@ -21,13 +21,11 @@ namespace JanusApi
       return Type;
     }
 
-    public override bool Equals(object obj)
+   
+
+    public override int GetHashCode()
     {
-      var myobj = obj as JanusRequestType;
-      if (myobj != null)
-        return myobj.Type == this.Type;
-      else
-        return false;
+        return base.GetHashCode();
     }
   }
 
@@ -43,7 +41,16 @@ namespace JanusApi
     public static readonly JanusPluginType JanusVideoRoom = new JanusPluginType("janus.plugin.videoroom");
     public static readonly JanusPluginType JanusVoiceMail = new JanusPluginType("janus.plugin.voicemail");
 
-    protected JanusPluginType(String type) : base(type) { }
+    private JanusPluginType(String type) : base(type) { }
+
+    public override bool Equals(object obj)
+    {
+        var myobj = obj as JanusPluginType;
+        if (myobj != null)
+            return myobj.Type == this.Type;
+        else
+            return false;
+    }
   }
 
   public sealed class JanusRequestType : TypeSafeEnum
@@ -55,6 +62,14 @@ namespace JanusApi
     public static readonly JanusRequestType Message = new JanusRequestType("message");
     public static readonly JanusRequestType KeepAlive = new JanusRequestType("keepalive");
    
-    protected JanusRequestType(String type) : base(type) { }
+    private JanusRequestType(String type) : base(type) { }
+    public override bool Equals(object obj)
+    {
+        var myobj = obj as JanusRequestType;
+        if (myobj != null)
+            return myobj.Type == this.Type;
+        else
+            return false;
+    }
   }
 }
