@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
 using JanusApi.Model;
+using log4net;
 namespace JanusApi
 {
   public abstract class JanusClient
   {
+    protected static readonly ILog log = Logger.Create();
     protected long session_handle;
     protected ConcurrentDictionary<JanusPluginType, long> plugin_handles;
 

@@ -30,18 +30,15 @@ namespace JanusApi
 {
   public partial class JanusRestClient
   {
+    private readonly object video_room_lock_obj = new object();
     public long JanusVideoRoomPluginHandle { get; private set; }
-    private static readonly object video_room_lock_obj = new object();
-    private MTSafeRefCounter janus_video_plugin_ref = new MTSafeRefCounter();
     /// <summary>
     /// This is part of the synchronous responses that the video room plugin provides
     /// </summary>
     /// <returns>A class containing the list of video rooms</returns>
     public JanusVideoRoomListResponse ListRooms()
     {
-      if (janus_video_plugin_ref.IncRef())
-      {
-        if (!IsRestClientInitialized())
+      if (!IsRestClientInitialized())
         {
           var resp = new JanusVideoRoomListResponse
           {
@@ -58,7 +55,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         if (!IsVideoRoomInitialized())
@@ -78,7 +74,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         dynamic obj = new ExpandoObject();
@@ -89,10 +84,7 @@ namespace JanusApi
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
         JanusVideoRoomListResponse response = Execute<JanusVideoRoomListResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        janus_video_plugin_ref.DecRef();
         return response;
-      }
-      return null;
     }
 
     /// <summary>
@@ -103,9 +95,7 @@ namespace JanusApi
     /// <returns>True if exists, false otherwise</returns>
     public JanusVideoRoomExistsResponse RoomExists(int room_id)
     {
-      if (janus_video_plugin_ref.IncRef())
-      {
-        if (!IsRestClientInitialized())
+      if (!IsRestClientInitialized())
         {
           var resp = new JanusVideoRoomExistsResponse
           {
@@ -122,7 +112,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         if (!IsVideoRoomInitialized())
@@ -142,7 +131,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         dynamic obj = new ExpandoObject();
@@ -154,10 +142,7 @@ namespace JanusApi
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
         JanusVideoRoomExistsResponse response = Execute<JanusVideoRoomExistsResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        janus_video_plugin_ref.DecRef();
         return response;
-      }
-      return null;
     }
 
 
@@ -178,9 +163,7 @@ namespace JanusApi
     /// <returns>Janus room response object. Will contain errors if not successful</returns>
     public JanusVideoRoomResponse CreateRoom(int roomid, string _description = null, string _secret = null, int _bitrate = 0, string _publishers = null, bool _record = false, string _rec_dir = null, int _fir_freq = 0, bool _private = false)
     {
-      if (janus_video_plugin_ref.IncRef())
-      {
-        if (!IsRestClientInitialized())
+      if (!IsRestClientInitialized())
         {
           var resp = new JanusVideoRoomResponse
           {
@@ -197,7 +180,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         if (!IsVideoRoomInitialized())
@@ -217,7 +199,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         dynamic obj = new ExpandoObject();
@@ -236,17 +217,12 @@ namespace JanusApi
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
         JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        janus_video_plugin_ref.DecRef();
         return response;
-      }
-      return JanusRoomSessionShuttingDownError();
     }
 
     public JanusVideoRoomResponse RequestStream(int roomid, string host, int port_base)
     {
-      if (janus_video_plugin_ref.IncRef())
-      {
-        if (!IsRestClientInitialized())
+      if (!IsRestClientInitialized())
         {
           var resp = new JanusVideoRoomResponse
           {
@@ -263,7 +239,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         if (!IsVideoRoomInitialized())
@@ -283,7 +258,6 @@ namespace JanusApi
               }
             }
           };
-          janus_video_plugin_ref.DecRef();
           return resp;
         }
         dynamic obj = new ExpandoObject();
@@ -297,10 +271,7 @@ namespace JanusApi
         msg.transaction = GetNewRandomTransaction();
         msg.body = obj;
         JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        janus_video_plugin_ref.DecRef();
         return response;
-      }
-      return JanusRoomSessionShuttingDownError();
     }
 
 
@@ -311,9 +282,7 @@ namespace JanusApi
     /// <returns>Verify success by checking error code</returns>
     public JanusVideoRoomResponse RemoveRoom(int room_id, string _secret = null)
     {
-      if (janus_video_plugin_ref.IncRef())
-      {
-        if (IsVideoRoomInitialized())
+      if (IsVideoRoomInitialized())
         {
           dynamic obj = new ExpandoObject();
             obj.request = "destroy";
@@ -325,15 +294,9 @@ namespace JanusApi
             if (api_secret.HasValue()) msg.apisecret = api_secret;
             msg.body = obj;
             JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-            janus_video_plugin_ref.DecRef();
             return response;
-        }
-        else
-        {
-          janus_video_plugin_ref.DecRef();
-        }
       }
-      return JanusRoomSessionShuttingDownError();
+       return JanusRoomSessionShuttingDownError();
     }
 
     public bool IsVideoRoomInitialized()
@@ -351,7 +314,7 @@ namespace JanusApi
     /// <returns></returns>
     public bool InitializeVideoRoomConnection()
     {
-      if (IsRestClientInitialized() && janus_video_plugin_ref.IncRef())
+      if (IsRestClientInitialized())
       {
         bool retVal = true;
         lock (video_room_lock_obj)
@@ -377,7 +340,6 @@ namespace JanusApi
             }
           }
         }
-        janus_video_plugin_ref.DecRef();
         return retVal;
       }
       return false;
@@ -385,10 +347,7 @@ namespace JanusApi
 
     public void DeinitializeVideoRoomConnection()
     {
-      janus_video_plugin_ref.BlockIncrease();
       //wait for all the other synchronous calls to finish if we are trying to send them
-      while (janus_video_plugin_ref.ReferenceCount > 0)
-        Thread.Sleep(250);
       lock (video_room_lock_obj)
       {
         if (IsRestClientInitialized() && JanusVideoRoomPluginHandle > 0)
@@ -400,7 +359,6 @@ namespace JanusApi
           Execute<JanusBaseResponse>(msg, JanusRequestType.Detach, JanusPluginType.JanusVideoRoom);
           JanusVideoRoomPluginHandle = 0;
         }
-        janus_video_plugin_ref.UnblockIncrease();
       }
     }
 

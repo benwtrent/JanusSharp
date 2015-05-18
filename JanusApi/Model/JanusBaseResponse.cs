@@ -26,8 +26,9 @@ using System.Text;
 using System.Dynamic;
 namespace JanusApi.Model
 {
-  public class JanusBaseResp
+  public class JanusBaseResponse
   {
+
     /// <summary>
     /// The command to send to the janus gateway
     /// E.g. "create", "success", "attach", "message"
@@ -39,10 +40,7 @@ namespace JanusApi.Model
     /// transaction
     /// </summary>
     public string transaction { get; set; }
-  }
 
-  public class JanusBaseResponse : JanusBaseResp
-  {
     /// <summary>
     /// The error information returned, if any.
     /// </summary>
@@ -58,7 +56,7 @@ namespace JanusApi.Model
     /// <summary>
     /// The Error code returned from the gateway
     /// </summary>
-    public long code { get; set; }
+    public JanusBaseErrorCodes code { get; set; }
     /// <summary>
     /// The reason for the error
     /// </summary>

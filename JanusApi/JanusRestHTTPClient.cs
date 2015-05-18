@@ -7,6 +7,7 @@ using RestSharp;
 using RestSharp.Deserializers;
 using RestSharp.Extensions;
 using JanusApi.Model;
+using log4net;
 namespace JanusApi
 {
   public class JanusRestHTTPClient : JanusClient
@@ -24,15 +25,39 @@ namespace JanusApi
       rest_request.RequestFormat = DataFormat.Json;
       if (session_handle > 0)
       {
-        rest_request.Resource = "{SessionToken}";
+        if (type == JanusRequestType.KeepAlive && plugin_handles.ContainsKey(JanusPluginType.JanusVideoRoom))
+          rest_request.Resource = String.Join(String.Empty, "{SessionToken}", "/",plugin_handles[JanusPluginType.JanusVideoRoom].ToString());
+        else
+          rest_request.Resource = "{SessionToken}";
       }
       else if(session_handle == 0 && type != JanusRequestType.Create)
       {
         throw new Exception("Session with janus has not been appropriately initialized");
       }
       rest_request.AddBody(request);
-
+#if DEBUG
+      Console.WriteLine("Sending: \n{0}\n To url {1} with SessionID {2}", SimpleJson.SerializeObject(request), rest_request.Resource, session_handle);
+#endif
+      log.DebugFormat("Sending: \n{0}\n To url {1} with SessionID {2}", SimpleJson.SerializeObject(request), rest_request.Resource, session_handle);
+      rest_request.OnBeforeDeserialization = (resp) =>
+      {
+#if DEBUG
+        Console.WriteLine("Recv: \n{0}", resp.Content);
+#endif
+        log.DebugFormat("Recv: \n{0}", resp.Content);
+      };
       var response = _client.Execute<T>(rest_request);
+
+      JanusBaseResponse errorCheck = response as JanusBaseResponse;
+      if (errorCheck != null)
+      {
+        if (errorCheck.error != null)
+        {
+          log.ErrorFormat("Received ErrorCode: {0}\n\t, \n\tErrorMessage: {1}\n", errorCheck.error.code, errorCheck.error.reason);
+          return response.Data;
+        }
+      }
+
 
       if (type == JanusRequestType.Create)
       {
@@ -74,8 +99,32 @@ namespace JanusApi
       {
         rest_request.Resource = "{SessionToken}";
       }
+      log.DebugFormat("Sending: \n{0}\n To url {1} with SessionID {2}", SimpleJson.SerializeObject(request), rest_request.Resource, session_handle);
+#if DEBUG
+      Console.WriteLine("Sending: \n{0}\n To url {1} with SessionID {2}", SimpleJson.SerializeObject(request), rest_request.Resource, session_handle);
+#endif
+      rest_request.OnBeforeDeserialization = (resp) =>
+      {
+
+#if DEBUG
+        Console.WriteLine("Recv: \n\tContent: {0}, \n\tStatusCode: {1}, \n\tStatusDescription: {2} \n", resp.Content, resp.StatusCode, resp.StatusDescription);
+#endif
+        log.DebugFormat("Recv: \n\tContent: {0}, \n\tStatusCode: {1}, \n\tStatusDescription: {2} \n", resp.Content, resp.StatusCode, resp.StatusDescription);
+      };
+
       rest_request.AddBody(request);
       var response = _client.Execute<T>(rest_request);
+
+      JanusBaseResponse errorCheck = response as JanusBaseResponse;
+      if (errorCheck != null)
+      {
+        if (errorCheck.error != null)
+        {
+          log.ErrorFormat("Received ErrorCode: {0}\n\t, \n\tErrorMessage: {1}\n", errorCheck.error.code, errorCheck.error.reason);
+          return response.Data;
+        }
+      }
+
       if (type == JanusRequestType.Attach)
       {
           AddPluginHandleFromResponse(response.Data, plugin);

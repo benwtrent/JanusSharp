@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using JanusApi.Model;
 using WebSocket4Net;
+using log4net;
 namespace JanusApi
 {
   public class JanusWebSocketClient : JanusClient
@@ -104,6 +105,7 @@ namespace JanusApi
         lock (messageSync)
         {
             _receivedMessage = String.Empty;
+            Console.WriteLine(toSend);
             _wsclient.Send(toSend);
             Monitor.Wait(messageSync, 30000);
             returnVal = _receivedMessage;

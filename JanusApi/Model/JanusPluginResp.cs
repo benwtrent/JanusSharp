@@ -51,7 +51,7 @@ namespace JanusApi.Model
 
   }
 
-  public class JanusPluginResponse : JanusBaseResp
+  public class JanusPluginResponse : JanusBaseResponse
   {
     public long session_id { get; set; }
     public long sender { get; set; }

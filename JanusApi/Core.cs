@@ -27,9 +27,11 @@ using System.Text;
 using System.Threading;
 using System.Dynamic;
 using JanusApi.Model;
+
+
 namespace JanusApi
 {
-  public partial class JanusRestClient
+  public partial class JanusRestClient : IDisposable
   {
     public long SessionToken { get; private set; }
     private static Random random = new Random();
@@ -41,6 +43,7 @@ namespace JanusApi
     private static readonly object thread_monitor = new object();
     private DynamicDelayExecute delay_timeout;
     private const int timeout_time = 20;
+   
     /// <summary>
     /// Constructs the Rest client and prepares it to start the connection.
     /// You must initialize the connection if you want to start it.
@@ -59,14 +62,20 @@ namespace JanusApi
       api_secret = apiSecret;
     }
 
+    public void Dispose()
+    {
+      keep_alive = false;
+      delay_timeout.Immediate();
+    }
+
     private void OnTimeOutFired(object obj, EventArgs e)
     {
       lock (janus_core_lock_obj)
       {
         if (keep_alive)
         {
-          _client.Execute<JanusBaseResponse>(new { janus = "keepalive" }, JanusRequestType.KeepAlive);
-          delay_timeout.HardReset(timeout_time);
+          _client.Execute<JanusBaseResponse>(new { janus = "keepalive", transaction = GetNewRandomTransaction() }, JanusRequestType.KeepAlive);
+          delay_timeout.ResetDelay(timeout_time);
         }
         else
         {
@@ -133,8 +142,6 @@ namespace JanusApi
     {
       Console.WriteLine("Starting Internal Cleanup");
 
-      //clean up our plugins first
-      DeinitializeVideoRoomConnection();
       DeinitializeConnection();
       Console.WriteLine("Finished Internal Clean up, should now be reinitialized");
     }
@@ -171,7 +178,8 @@ namespace JanusApi
     /// <returns>The populated response</returns>
     public T Execute<T>(dynamic request, JanusRequestType type) where T : new()
     {
-      delay_timeout.ResetDelay(timeout_time);
+      if(type != JanusRequestType.Destroy)
+        delay_timeout.ResetDelay(timeout_time);
       var response = _client.Execute<T>(request, type);
       return response.Data;
     }

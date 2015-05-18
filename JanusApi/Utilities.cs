@@ -166,11 +166,13 @@ namespace JanusApi
           count--;
         }
       }
-      OnDelayLimitReached();
       lock (count_lock_obj)
       {
         Monitor.PulseAll(count_lock_obj);
       }
+      OnDelayLimitReached();
+      if (count > 0)
+        DelayThread();
     }
 
     private void OnDelayLimitReached()
@@ -191,8 +193,8 @@ namespace JanusApi
       {
         count = 0;
         Monitor.PulseAll(count_lock_obj);
-        if(count_down_thread.IsAlive)
-          Monitor.Wait(count_lock_obj);
+        while(count_down_thread.IsAlive)
+          Monitor.Wait(count_lock_obj, 1000);
       }
     }
 
