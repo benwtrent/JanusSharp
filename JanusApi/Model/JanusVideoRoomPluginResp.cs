@@ -24,6 +24,13 @@ using System.Collections.Generic;
 
 namespace JanusApi.Model
 {
+  public class JanusVideoRoomBody : JanusPluginBody
+  {
+    public string request { get; set; }
+    public long? room { get; set; }
+    public string secret { get; set; }
+  }
+  
   public class JanusVideoRoom
   {
     /// <summary>
@@ -103,23 +110,68 @@ namespace JanusApi.Model
     janus_videoroom_p_type_publisher	
   }
 
-  public class JanusVideoRoomResponse : JanusPluginResponse
+  public class JanusVideoRoomCreationBody
   {
-    public JanusVideoRoomPluginData plugindata { get; set; } 
+    public string request { get { return "create"; } set { return; } }
+    public long room { get; set; }
+    public bool record { get; set; }
+    public bool is_private { get; set; }
+    public int bitrate { get; set; }
+    public int fir_freq { get; set; }
+    public string description { get; set; }
+    public string secret { get; set; }
+    public string rec_dir { get; set; }
   }
 
-  public class JanusVideoRoomInfoResponse : JanusPluginResponse
+  public class JanusVideoRoomCreationObject : JanusPluginObject
+  {
+    public JanusVideoRoomCreationBody body { get; set; }
+    public JanusVideoRoomPluginData plugindata { get; set; }
+  }
+
+  public class JanusVideoRoomDestroyObject : JanusPluginObject
+  {
+    public JanusVideoRoomBody body { get; set; }
+    public JanusVideoRoomPluginData data { get; set; }
+  }
+
+  public class JanusVideoRoomStreamRequestBody
+  {
+    public string request { get { return "anonymous_listen"; } set { return; } }
+    public long room { get; set; }
+    public string host { get; set; }
+    public int port { get; set; }
+  }
+  public class JanusVideoStreamRequestDataInternal
+  {
+
+  }
+
+  public class JanusVideoStreamRequestData : JanusPluginData
+  {
+    JanusVideoStreamRequestDataInternal data { get; set; }
+  }
+
+  public class JanusVideoRoomStreamRequestObject : JanusPluginObject
+  {
+    public JanusVideoRoomStreamRequestBody body { get; set; }
+    public JanusVideoStreamRequestData plugindata { get; set; }
+  }
+
+  public class JanusVideoRoomInfoObject : JanusPluginObject
   {
     public JanusVideoRoomInfoPluginData plugindata { get; set; }
   }
 
-  public class JanusVideoRoomListResponse : JanusPluginResponse
+  public class JanusVideoRoomListObject : JanusPluginObject
   {
+    public JanusVideoRoomBody body { get; set; }
     public JanusVideoRoomListPluginData plugindata { get; set; }
   }
 
-  public class JanusVideoRoomExistsResponse : JanusPluginResponse
+  public class JanusVideoRoomExistsObject : JanusPluginObject
   {
+    public JanusVideoRoomBody body { get; set; }
     public JanusVideoRoomExistsPluginData plugindata { get; set; }
   }
 

@@ -21,6 +21,18 @@ namespace JanusApi
         _wsclient = new WebSocket(url, "janus-protocol");
         _wsclient.Open();
         _wsclient.MessageReceived += _wsclient_MessageReceived;
+        _wsclient.Closed += new EventHandler(_wsclient_Closed);
+    }
+
+    void _wsclient_Closed(object sender, EventArgs e)
+    {
+      ClearConnectionInfo();
+    }
+
+    public override void Close()
+    {
+      if (_wsclient.State == WebSocketState.Open || _wsclient.State != WebSocketState.Connecting)
+        _wsclient.Close();
     }
 
     void _wsclient_MessageReceived(object sender, MessageReceivedEventArgs e)
@@ -32,55 +44,116 @@ namespace JanusApi
         }
     }
 
-    public override T Execute<T>(dynamic Request, JanusRequestType type)
+    private T Execute<T>(T Request, JanusRequestType type, JanusPluginType plugin) where T : JanusBaseObject, new()
     {
-        if(type != JanusRequestType.Create)
-        {
-            if (session_handle <= 0)
-                throw new Exception("Session with janus has not been appropriately initialized");
-            Request.session_id = session_handle;
-        }
-        var resp = Execute<T>(Request);
-        if(type == JanusRequestType.Create)
-        {
-            SetSessionHandleFromResponse(resp);
-        }
-        else if(type == JanusRequestType.Destroy)
-        {
-            session_handle = 0;
-        }
-        return resp;
-    }
+     if (session_handle <= 0)
+      {
+        return getNewError<T>(JanusBaseErrorCodes.JANUS_ERROR_SESSION_NOT_FOUND, "No session found", Request.transaction);
+      }
+      if (!plugin_handles.ContainsKey(plugin))
+      {
+        return getNewError<T>(JanusBaseErrorCodes.JANUS_ERROR_PLUGIN_NOT_FOUND, "Plugin: " + plugin.Type + " not attached", Request.transaction);
+      }
+      Request.session_id = session_handle;
+      Request.handle_id = plugin_handles[plugin];
 
-    public override T Execute<T>(dynamic Request, JanusRequestType type, JanusPluginType plugin)
+      var response = Execute<T>(Request);
+      T returnVal = transformAndErrorCheck<T>(response, Request.transaction);
+      return returnVal;     
+    }
+    
+    public override JanusBaseObject Execute(JanusBaseObject Request, JanusRequestType type)
     {
-        if (type == JanusRequestType.Create || type == JanusRequestType.Destroy)
-            return this.Execute<T>(Request, type);
-        if(session_handle == 0)
+      if (type != JanusRequestType.Create)
+      {
+        if (session_handle <= 0)
         {
-            throw new Exception("Janus session is not initialized");
+          return getNewError<JanusBaseObject>(JanusBaseErrorCodes.JANUS_ERROR_SESSION_NOT_FOUND, "No session exists", Request.transaction);
         }
         Request.session_id = session_handle;
-        if (!plugin_handles.Keys.Contains(plugin) && type != JanusRequestType.Attach)
-        {
-            throw new Exception("The desired plugin must be attached before action can be taken against it");
-        }
-        if(type != JanusRequestType.Attach)
-        {
-            Request.handle_id = plugin_handles[plugin];
-        }
-       var resp = Execute<T>(Request); 
-        
-        if(type == JanusRequestType.Attach)
-        {
-            AddPluginHandleFromResponse(resp, plugin);
-        }
-        if(type == JanusRequestType.Detach)
-        {
-            long id;
-            plugin_handles.TryRemove(plugin, out id);
-        }
-        return resp;
+      }
+      
+      var resp = Execute<JanusBaseObject>(Request);
+      JanusBaseObject returnVal = transformAndErrorCheck<JanusBaseObject>(resp, Request.transaction);
+
+      if (returnVal.error != null)
+      {
+        return returnVal;
+      }
+      else if (type == JanusRequestType.Create)
+      {
+        session_handle = returnVal.data.id;
+      }
+      else if (type == JanusRequestType.Destroy)
+      {
+        session_handle = 0;
+        plugin_handles.Clear();
+      }
+      return returnVal;
+    }
+
+    public override JanusBaseObject Execute(JanusBaseObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      if (type == JanusRequestType.Create || type == JanusRequestType.Destroy)
+        return this.Execute(Request, type);
+
+      if (session_handle <= 0)
+      {
+        return getNewError<JanusBaseObject>(JanusBaseErrorCodes.JANUS_ERROR_SESSION_NOT_FOUND, "No session found", Request.transaction);
+      }
+      if (!plugin_handles.ContainsKey(plugin) && type != JanusRequestType.Attach)
+      {
+        return getNewError<JanusBaseObject>(JanusBaseErrorCodes.JANUS_ERROR_PLUGIN_NOT_FOUND, "Plugin: " + plugin.Type + " not attached", Request.transaction);
+      }
+      Request.session_id = session_handle;
+      if (type != JanusRequestType.Attach)
+      {
+        Request.handle_id = plugin_handles[plugin];
+      }
+
+      var resp = Execute<JanusBaseObject>(Request);
+      JanusBaseObject returnVal = transformAndErrorCheck<JanusBaseObject>(resp, Request.transaction);
+      if (returnVal.error != null)
+        return returnVal;
+
+      if (type == JanusRequestType.Attach)
+        plugin_handles[plugin] = returnVal.data.id;
+      if (type == JanusRequestType.Detach)
+      {
+        long temp_id;
+        plugin_handles.TryRemove(plugin, out temp_id);
+      }
+      return returnVal;
+    }
+
+    public override JanusVideoRoomExistsObject Execute(JanusVideoRoomExistsObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return Execute<JanusVideoRoomExistsObject>(Request, type, plugin);
+    }
+
+    public override JanusVideoRoomInfoObject Execute(JanusVideoRoomInfoObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return Execute<JanusVideoRoomInfoObject>(Request, type, plugin);
+    }
+
+    public override JanusVideoRoomListObject Execute(JanusVideoRoomListObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return Execute<JanusVideoRoomListObject>(Request, type, plugin);
+    }
+
+    public override JanusVideoRoomCreationObject Execute(JanusVideoRoomCreationObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return this.Execute<JanusVideoRoomCreationObject>(Request, type, plugin);
+    }
+
+    public override JanusVideoRoomDestroyObject Execute(JanusVideoRoomDestroyObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return this.Execute<JanusVideoRoomDestroyObject>(Request, type, plugin);
+    }
+
+    public override JanusVideoRoomStreamRequestObject Execute(JanusVideoRoomStreamRequestObject Request, JanusRequestType type, JanusPluginType plugin)
+    {
+      return this.Execute<JanusVideoRoomStreamRequestObject>(Request, type, plugin);
     }
 
     public override void ClearConnectionInfo()
@@ -104,18 +177,26 @@ namespace JanusApi
         string returnVal = "";
         lock (messageSync)
         {
+#if DEBUG
+          Console.WriteLine("Send: {0}", toSend);
+#endif
+          log.DebugFormat("Send: {0}", toSend);
             _receivedMessage = String.Empty;
-            Console.WriteLine(toSend);
             _wsclient.Send(toSend);
             Monitor.Wait(messageSync, 30000);
             returnVal = _receivedMessage;
+#if DEBUG
+            Console.WriteLine("Recv: {0}", returnVal);
+#endif
+            log.DebugFormat("Recv: {0}", returnVal);
+            
         }
         return returnVal; 
     }
 
-    private T Execute<T>(dynamic obj)
+    private T Execute<T>(dynamic obj) where T: JanusBaseObject, new()
     {
-        return JsonConvert.DeserializeObject<T>(SendRecvOnSocketSync(JsonConvert.SerializeObject(obj)));
+      return JsonConvert.DeserializeObject<T>(SendRecvOnSocketSync(JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })));
     }
   }
 }

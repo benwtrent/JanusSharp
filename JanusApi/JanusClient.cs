@@ -17,6 +17,12 @@ namespace JanusApi
     {
         plugin_handles = new ConcurrentDictionary<JanusPluginType, long>();
     }
+
+    /// <summary>
+    /// Close all the underlying connections if they are still open
+    /// </summary>
+    public abstract void Close();
+
     /// <summary>
     /// This will send the given request to the janus server. And respond with an object of type T.
     /// </summary>
@@ -24,10 +30,7 @@ namespace JanusApi
     /// <param name="Request">The request object to be serialized and sent</param>
     /// <param name="type">The request type</param>
     /// <returns>An object of type T containing the response information</returns>
-    public virtual T Execute<T>(dynamic Request, JanusRequestType type) where T : new()
-    {
-      return default(T); 
-    }
+    public abstract JanusBaseObject Execute(JanusBaseObject Request, JanusRequestType type);
 
     /// <summary>
     /// This will send the given request to the janus server in pertaining to the specified plugin
@@ -37,10 +40,19 @@ namespace JanusApi
     /// <param name="type"></param>
     /// <param name="plugin"></param>
     /// <returns></returns>
-    public virtual T Execute<T>(dynamic Request, JanusRequestType type, JanusPluginType plugin) where T : new()
-    {
-      return default(T);
-    }
+    public abstract JanusBaseObject Execute(JanusBaseObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomCreationObject Execute(JanusVideoRoomCreationObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomDestroyObject Execute(JanusVideoRoomDestroyObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomInfoObject Execute(JanusVideoRoomInfoObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomListObject Execute(JanusVideoRoomListObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomExistsObject Execute(JanusVideoRoomExistsObject Request, JanusRequestType type, JanusPluginType plugin);
+
+    public abstract JanusVideoRoomStreamRequestObject Execute(JanusVideoRoomStreamRequestObject Request, JanusRequestType type, JanusPluginType plugin);
 
     /// <summary>
     /// This removes any stored connection information such as session handles and plugin handles. 
@@ -56,31 +68,6 @@ namespace JanusApi
       return session_handle; 
     }
 
-    protected void SetSessionHandleFromResponse(dynamic obj)
-    {
-        JanusBaseResponse resp = obj as JanusBaseResponse;
-        if(resp != null)
-        {
-            session_handle = resp.data.id;
-        }
-        else
-        {
-            session_handle = 0;
-        }
-    }
-
-    protected void AddPluginHandleFromResponse(dynamic obj, JanusPluginType type)
-    {
-        JanusBaseResponse resp = obj as JanusBaseResponse;
-        if(resp != null)
-        {
-            plugin_handles[type] = resp.data.id;
-        }
-        else
-        {
-            plugin_handles[type] = 0;
-        }
-    }
     /// <summary>
     /// Gets the current list of attached plugins
     /// </summary>
@@ -88,6 +75,36 @@ namespace JanusApi
     public List<JanusPluginType> GetAttachedPlugins()
     {
       return plugin_handles.Keys.ToList();
+    }
+
+    protected T getNewError<T>(JanusBaseErrorCodes Code, String Reason, String Trans) where T : JanusBaseObject
+    {
+      var error = new JanusBaseObject
+      {
+        janus = JanusRequestType.Error,
+        transaction = Trans,
+        error = new JanusBaseError
+        {
+          code = Code,
+          reason = Reason
+        }
+      };
+      return error as T;
+    }
+
+    protected T transformAndErrorCheck<T>(dynamic obj, String Trans) where T: JanusBaseObject
+    {
+      T myObj = obj as T;
+      if (obj == null)
+      {
+        log.ErrorFormat("Unexpected return from HTTP Rest request");
+        return getNewError<T>(JanusBaseErrorCodes.JANUS_ERROR_UNKNOWN, "Unknown response from janus", Trans);
+      }
+      if (myObj.error != null)
+      {
+        log.ErrorFormat("Received ErrorCode: {0}\n\t, \n\tErrorMessage: {1}\n", myObj.error.code, myObj.error.reason);
+      }
+      return myObj;
     }
   }
 }

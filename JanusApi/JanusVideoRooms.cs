@@ -36,55 +36,16 @@ namespace JanusApi
     /// This is part of the synchronous responses that the video room plugin provides
     /// </summary>
     /// <returns>A class containing the list of video rooms</returns>
-    public JanusVideoRoomListResponse ListRooms()
+    public JanusVideoRoomListObject ListRooms()
     {
-      if (!IsRestClientInitialized())
-        {
-          var resp = new JanusVideoRoomListResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomListPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomListPluginDataInternal
-              {
-                videoroom = "none",
-                list = null,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Initialize the API client first"
-              }
-            }
-          };
-          return resp;
-        }
-        if (!IsVideoRoomInitialized())
-        {
-          var resp = new JanusVideoRoomListResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomListPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomListPluginDataInternal
-              {
-                videoroom = "none",
-                list = null,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Could not attach the plugin"
-              }
-            }
-          };
-          return resp;
-        }
-        dynamic obj = new ExpandoObject();
-        obj.request = "list";
-        dynamic msg = new ExpandoObject();
-        if (api_secret.HasValue()) msg.apisecret = api_secret;
-        msg.janus = "message";
-        msg.transaction = GetNewRandomTransaction();
-        msg.body = obj;
-        JanusVideoRoomListResponse response = Execute<JanusVideoRoomListResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        return response;
+      JanusVideoRoomListObject obj = new JanusVideoRoomListObject();
+      obj.body = new JanusVideoRoomBody();
+      obj.body.request = "list";
+      obj.janus = JanusRequestType.Message;
+      if (api_secret.HasValue()) obj.apisecret = api_secret;
+      obj.transaction = GetNewRandomTransaction();
+      JanusVideoRoomListObject response = _client.Execute(obj, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
+      return response;
     }
 
     /// <summary>
@@ -93,56 +54,17 @@ namespace JanusApi
     /// </summary>
     /// <param name="room_id">The room id to with which to check existance</param>
     /// <returns>True if exists, false otherwise</returns>
-    public JanusVideoRoomExistsResponse RoomExists(int room_id)
+    public JanusVideoRoomExistsObject RoomExists(int room_id)
     {
-      if (!IsRestClientInitialized())
-        {
-          var resp = new JanusVideoRoomExistsResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomExistsPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomExistsPluginDataInternal
-              {
-                videoroom = "none",
-                exists = false,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Initialize the API client first"
-              }
-            }
-          };
-          return resp;
-        }
-        if (!IsVideoRoomInitialized())
-        {
-          var resp = new JanusVideoRoomExistsResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomExistsPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomExistsPluginDataInternal
-              {
-                videoroom = "none",
-                exists = false,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Could not attach the plugin"
-              }
-            }
-          };
-          return resp;
-        }
-        dynamic obj = new ExpandoObject();
-        obj.request = "exists";
-        obj.room = room_id;
-        dynamic msg = new ExpandoObject();
-        if (api_secret.HasValue()) msg.apisecret = api_secret;
-        msg.janus = "message";
-        msg.transaction = GetNewRandomTransaction();
-        msg.body = obj;
-        JanusVideoRoomExistsResponse response = Execute<JanusVideoRoomExistsResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        return response;
+      JanusVideoRoomExistsObject obj = new JanusVideoRoomExistsObject();
+      obj.body = new JanusVideoRoomBody();
+      obj.body.request = "exists";
+      obj.body.room = room_id;
+      if (api_secret.HasValue()) obj.apisecret = api_secret;
+      obj.janus = JanusRequestType.Message;
+      obj.transaction = GetNewRandomTransaction();
+      JanusVideoRoomExistsObject response = _client.Execute(obj, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
+      return response;
     }
 
 
@@ -161,117 +83,38 @@ namespace JanusApi
     /// <param name="_fir_freq">Optional, the frequency of FIR requests for the room...also sends PLI requests at the same time</param>
     /// <param name="_private">Optional, whether the room is private or not...defaults to not</param>
     /// <returns>Janus room response object. Will contain errors if not successful</returns>
-    public JanusVideoRoomResponse CreateRoom(int roomid, string _description = null, string _secret = null, int _bitrate = 0, string _publishers = null, bool _record = false, string _rec_dir = null, int _fir_freq = 0, bool _private = false)
+    public JanusVideoRoomCreationObject CreateRoom(int roomid, string _description = null, string _secret = null, int _bitrate = 0, string _publishers = null, bool _record = false, string _rec_dir = null, int _fir_freq = 0, bool _private = false)
     {
-      if (!IsRestClientInitialized())
-        {
-          var resp = new JanusVideoRoomResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomPluginDataInternal
-              {
-                videoroom = "none",
-                room = 0,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Initialize the API client first"
-              }
-            }
-          };
-          return resp;
-        }
-        if (!IsVideoRoomInitialized())
-        {
-          var resp = new JanusVideoRoomResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomPluginDataInternal
-              {
-                videoroom = "none",
-                room = 0,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Could not attach the plugin"
-              }
-            }
-          };
-          return resp;
-        }
-        dynamic obj = new ExpandoObject();
-        obj.request = "create";
-        obj.room = roomid;
-        obj.record = _record;
-        obj.is_private = _private;
-        if (_bitrate > 0) obj.bitrate = _bitrate;
-        if (_fir_freq > 0) obj.fir_freq = _fir_freq;
-        if (_description.HasValue()) obj.description = _description;
-        if (_secret.HasValue()) obj.secret = _secret;
-        if (_rec_dir.HasValue()) obj.rec_dir = _rec_dir;
-        dynamic msg = new ExpandoObject();
-        if (api_secret.HasValue()) msg.apisecret = api_secret;
-        msg.janus = "message";
-        msg.transaction = GetNewRandomTransaction();
-        msg.body = obj;
-        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        return response;
+      JanusVideoRoomCreationObject obj = new JanusVideoRoomCreationObject();
+      obj.body = new JanusVideoRoomCreationBody();
+      obj.body.request = "create";
+      obj.body.room = roomid;
+      obj.body.record = _record;
+      obj.body.is_private = _private;
+      if (_bitrate > 0) obj.body.bitrate = _bitrate;
+      if (_fir_freq > 0) obj.body.fir_freq = _fir_freq;
+      if (_description.HasValue()) obj.body.description = _description;
+      if (_secret.HasValue()) obj.body.secret = _secret;
+      if (_rec_dir.HasValue()) obj.body.rec_dir = _rec_dir;
+      if (api_secret.HasValue()) obj.apisecret = api_secret;
+      obj.janus = JanusRequestType.Message;
+      obj.transaction = GetNewRandomTransaction();
+      JanusVideoRoomCreationObject response = _client.Execute(obj, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
+      return response;
     }
 
-    public JanusVideoRoomResponse RequestStream(int roomid, string host, int port_base)
+    public JanusVideoRoomStreamRequestObject RequestStream(int roomid, string host, int port_base)
     {
-      if (!IsRestClientInitialized())
-        {
-          var resp = new JanusVideoRoomResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomPluginDataInternal
-              {
-                videoroom = "none",
-                room = 0,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Initialize the API client first"
-              }
-            }
-          };
-          return resp;
-        }
-        if (!IsVideoRoomInitialized())
-        {
-          var resp = new JanusVideoRoomResponse
-          {
-            janus = "failure",
-            plugindata = new JanusVideoRoomPluginData
-            {
-              plugin = "janus.plugin.videoroom",
-              data = new JanusVideoRoomPluginDataInternal
-              {
-                videoroom = "none",
-                room = 0,
-                error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_NO_SESSION,
-                error = "Could not attach the plugin"
-              }
-            }
-          };
-          return resp;
-        }
-        dynamic obj = new ExpandoObject();
-        obj.request = "anonymous_listen";
-        obj.room = roomid;
-        obj.host = host;
-        obj.port = port_base;
-        dynamic msg = new ExpandoObject();
-        if (api_secret.HasValue()) msg.apisecret = api_secret;
-        msg.janus = "message";
-        msg.transaction = GetNewRandomTransaction();
-        msg.body = obj;
-        JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-        return response;
+      JanusVideoRoomStreamRequestObject obj = new JanusVideoRoomStreamRequestObject();
+      obj.body = new JanusVideoRoomStreamRequestBody();
+      obj.body.room = roomid;
+      obj.body.host = host;
+      obj.body.port = port_base;
+      obj.janus = JanusRequestType.Message;
+      obj.transaction = GetNewRandomTransaction();
+      if (api_secret.HasValue()) obj.apisecret = api_secret;
+      JanusVideoRoomStreamRequestObject response = _client.Execute(obj, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
+      return response;
     }
 
 
@@ -280,23 +123,18 @@ namespace JanusApi
     /// </summary>
     /// <param name="room_id">The room id to remove</param>
     /// <returns>Verify success by checking error code</returns>
-    public JanusVideoRoomResponse RemoveRoom(int room_id, string _secret = null)
+    public JanusVideoRoomDestroyObject RemoveRoom(int room_id, string _secret = null)
     {
-      if (IsVideoRoomInitialized())
-        {
-          dynamic obj = new ExpandoObject();
-            obj.request = "destroy";
-            obj.room = room_id;
-            if (_secret.HasValue()) obj.secret = _secret;
-            dynamic msg = new ExpandoObject();
-            msg.janus = "message";
-            msg.transaction = GetNewRandomTransaction();
-            if (api_secret.HasValue()) msg.apisecret = api_secret;
-            msg.body = obj;
-            JanusVideoRoomResponse response = Execute<JanusVideoRoomResponse>(msg, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
-            return response;
-      }
-       return JanusRoomSessionShuttingDownError();
+      JanusVideoRoomDestroyObject obj = new JanusVideoRoomDestroyObject();
+      obj.body = new JanusVideoRoomBody();
+      obj.body.request = "destroy";
+      obj.body.room = room_id;
+      if (_secret.HasValue()) obj.body.secret = _secret;
+      obj.janus = JanusRequestType.Message;
+      obj.transaction = GetNewRandomTransaction();
+      if (api_secret.HasValue()) obj.apisecret = api_secret;
+      JanusVideoRoomDestroyObject response = _client.Execute(obj, JanusRequestType.Message, JanusPluginType.JanusVideoRoom);
+      return response;
     }
 
     public bool IsVideoRoomInitialized()
@@ -314,74 +152,25 @@ namespace JanusApi
     /// <returns></returns>
     public bool InitializeVideoRoomConnection()
     {
-      if (IsRestClientInitialized())
-      {
-        bool retVal = true;
-        lock (video_room_lock_obj)
-        {
-          if (JanusVideoRoomPluginHandle == 0)
-          {
-            string transaction = GetNewRandomTransaction();
-            dynamic msg = new ExpandoObject();
-            msg.janus = "attach";
-            msg.plugin = "janus.plugin.videoroom";
-            msg.transaction = GetNewRandomTransaction();
-            if (api_secret.HasValue()) msg.apisecret = api_secret;
-            JanusBaseResponse resp = Execute<JanusBaseResponse>(msg, JanusRequestType.Attach, JanusPluginType.JanusVideoRoom);
-
-            if (resp == (null) || resp.janus == "error")
-            {
-              retVal = false;
-            }
-            else
-            {
-              JanusVideoRoomPluginHandle = resp.data.id;
-              retVal = true;
-            }
-          }
-        }
-        return retVal;
-      }
-      return false;
+      JanusBaseObject msg = new JanusBaseObject();
+      string transaction = GetNewRandomTransaction();
+      msg.janus = JanusRequestType.Attach;
+      msg.plugin = JanusPluginType.JanusVideoRoom;
+      msg.transaction = GetNewRandomTransaction();
+      if (api_secret.HasValue()) msg.apisecret = api_secret;
+      JanusBaseObject resp = _client.Execute(msg, JanusRequestType.Attach, JanusPluginType.JanusVideoRoom);
+      return resp.janus == JanusRequestType.Success;
     }
 
     public void DeinitializeVideoRoomConnection()
     {
-      //wait for all the other synchronous calls to finish if we are trying to send them
-      lock (video_room_lock_obj)
-      {
-        if (IsRestClientInitialized() && JanusVideoRoomPluginHandle > 0)
-        {
-          dynamic msg = new ExpandoObject();
-          msg.janus = "detach";
-          msg.transaction = GetNewRandomTransaction();
-          if (api_secret.HasValue()) msg.apisecret = api_secret;
-          Execute<JanusBaseResponse>(msg, JanusRequestType.Detach, JanusPluginType.JanusVideoRoom);
-          JanusVideoRoomPluginHandle = 0;
-        }
-      }
+      JanusBaseObject msg = new JanusBaseObject();
+      msg.janus = JanusRequestType.Detach;
+      msg.transaction = GetNewRandomTransaction();
+      if (api_secret.HasValue()) msg.apisecret = api_secret;
+      _client.Execute(msg, JanusRequestType.Detach, JanusPluginType.JanusVideoRoom);
+      JanusVideoRoomPluginHandle = 0;
     }
-
-    private JanusVideoRoomResponse JanusRoomSessionShuttingDownError()
-    {
-      var error_resp = new JanusVideoRoomResponse
-      {
-        janus = "failure",
-        plugindata = new JanusVideoRoomPluginData
-        {
-          plugin = "janus.plugin.videoroom",
-          data = new JanusVideoRoomPluginDataInternal
-          {
-            videoroom = "none",
-            room = 0,
-            error_code = (int)JanusRoomErrorCodes.JANUS_VIDEOROOM_ERROR_UNKNOWN_ERROR,
-            error = "We seem to be in the middle of shutting down"
-          }
-        }
-      };
-      return error_resp;
-    }
-
     //TODO determine if we want to support the participant function calls...
   }
 }

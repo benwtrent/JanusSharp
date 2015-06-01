@@ -58,9 +58,11 @@
   <ItemGroup>
     <Compile Include="Core.cs" />
     <Compile Include="JanusClient.cs" />
+    <Compile Include="JanusDeserializer.cs" />
     <Compile Include="JanusInterfaceFactory.cs" />
     <Compile Include="JanusRequestType.cs" />
     <Compile Include="JanusRestHTTPClient.cs" />
+    <Compile Include="JanusSerializer.cs" />
     <Compile Include="JanusWebSocketClient.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Model\JanusBaseResponse.cs" />

@@ -26,20 +26,24 @@ using System.Text;
 using System.Dynamic;
 namespace JanusApi.Model
 {
-  public class JanusBaseResponse
+  public class JanusBaseObject
   {
-
+    public JanusBaseObject() { }
     /// <summary>
     /// The command to send to the janus gateway
     /// E.g. "create", "success", "attach", "message"
     /// </summary>
-    public string janus { get; set; }
+    public JanusRequestType janus { get; set; }
 
     /// <summary>
     /// A random string of alphanumeric characters that will make sure you are part of the same
     /// transaction
     /// </summary>
-    public string transaction { get; set; }
+    public String transaction { get; set; }
+
+    public Int64? session_id { get; set; }
+
+    public Int64? handle_id { get; set; }
 
     /// <summary>
     /// The error information returned, if any.
@@ -49,10 +53,15 @@ namespace JanusApi.Model
     /// The janus data returned, if any.
     /// </summary>
     public JanusBaseData data { get; set; }
+
+    public string apisecret { get; set; }
+
+    public JanusPluginType plugin { get; set; }
   }
 
   public class JanusBaseError
   {
+    public JanusBaseError() { }
     /// <summary>
     /// The Error code returned from the gateway
     /// </summary>
@@ -65,6 +74,7 @@ namespace JanusApi.Model
 
   public class JanusBaseData
   {
+    public JanusBaseData() { }
     /// <summary>
     /// The id returned in the success transaction
     /// </summary>

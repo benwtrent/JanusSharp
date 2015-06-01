@@ -74,8 +74,18 @@ namespace JanusApi
       {
         if (keep_alive)
         {
-          _client.Execute<JanusBaseResponse>(new { janus = "keepalive", transaction = GetNewRandomTransaction() }, JanusRequestType.KeepAlive);
-          delay_timeout.ResetDelay(timeout_time);
+          JanusBaseObject msg = new JanusBaseObject();
+          msg.janus = JanusRequestType.KeepAlive;
+          msg.transaction = GetNewRandomTransaction();
+          JanusBaseObject response;
+          if(_client.GetAttachedPlugins().Contains(JanusPluginType.JanusVideoRoom))
+            response = _client.Execute(msg, JanusRequestType.KeepAlive, JanusPluginType.JanusVideoRoom);
+          else
+            response = _client.Execute(msg, JanusRequestType.KeepAlive);
+          if (response.janus == JanusRequestType.Ack)
+            delay_timeout.ResetDelay(timeout_time);
+          else
+            InternalCleanUp();
         }
         else
         {
@@ -108,12 +118,13 @@ namespace JanusApi
       {
         if (SessionToken == 0)
         {
-          dynamic obj = new ExpandoObject();
+          JanusBaseObject obj = new JanusBaseObject();
           if (!String.IsNullOrWhiteSpace(api_secret)) obj.apisecret = api_secret;
-          obj.janus = "create";
+
+          obj.janus = JanusRequestType.Create;
           obj.transaction = GetNewRandomTransaction();
-          JanusBaseResponse resp = _client.Execute<JanusBaseResponse>(obj, JanusRequestType.Create);
-          if (resp == null || resp.janus != "success")
+          JanusBaseObject resp = _client.Execute(obj, JanusRequestType.Create);
+          if (resp.janus != JanusRequestType.Success)
           {
             retVal = false;
           }
@@ -148,12 +159,13 @@ namespace JanusApi
 
     private void DeinitializeConnection()
     {
-      dynamic msg = new ExpandoObject();
-      msg.janus = "destroy";
+      JanusBaseObject msg = new JanusBaseObject();
+      msg.janus = JanusRequestType.Destroy;
       msg.transaction = GetNewRandomTransaction();
       if (!String.IsNullOrWhiteSpace(api_secret)) msg.apisecret = api_secret;
-      _client.Execute<JanusBaseResponse>(msg, JanusRequestType.Destroy);
+      _client.Execute(msg, JanusRequestType.Destroy);
       _client.ClearConnectionInfo();
+      _client.Close();
       SessionToken = 0;
     }
 
@@ -168,27 +180,6 @@ namespace JanusApi
       var chars = "abcdefghijklmnopqrstuvwxyz1234567890";
       var result = new string(Enumerable.Repeat(chars, 12).Select(s => s[random.Next(s.Length)]).ToArray());
       return result;
-    }
-
-    /// <summary>
-    /// Execute a REST request against the gateway
-    /// </summary>
-    /// <typeparam name="T">The type of object to create and return with the response data</typeparam>
-    /// <param name="request">The RestRequest to make against the gateway(assumes that the connection is intialized</param>
-    /// <returns>The populated response</returns>
-    public T Execute<T>(dynamic request, JanusRequestType type) where T : new()
-    {
-      if(type != JanusRequestType.Destroy)
-        delay_timeout.ResetDelay(timeout_time);
-      var response = _client.Execute<T>(request, type);
-      return response.Data;
-    }
-
-    public T Execute<T>(dynamic request, JanusRequestType type, JanusPluginType plugin) where T : new()
-    {
-      delay_timeout.ResetDelay(timeout_time);
-      var response = _client.Execute<T>(request, type, plugin);
-      return response;
     }
   }
 }
